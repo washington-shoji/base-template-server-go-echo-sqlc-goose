@@ -11,7 +11,6 @@ import (
 func HealthCheckRoutes(e *echo.Echo, ctx context.Context, db *database.Queries) {
 
 	healthCheckHandler := handlers.NewFavoriteCoinsHandler()
-	group := e.Group("api/v1")
 
-	group.GET("/health-check", healthCheckHandler.ServerHealthCheck)
+	e.GET("/", healthCheckHandler.ServerHealthCheck)
 }
