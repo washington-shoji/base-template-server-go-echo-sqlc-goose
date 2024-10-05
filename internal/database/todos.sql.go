@@ -45,3 +45,104 @@ func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) (Todo, e
 	)
 	return i, err
 }
+
+const deleteTodo = `-- name: DeleteTodo :exec
+
+DELETE FROM todos
+WHERE todo_id = $1
+`
+
+func (q *Queries) DeleteTodo(ctx context.Context, todoID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteTodo, todoID)
+	return err
+}
+
+const findTodoById = `-- name: FindTodoById :one
+
+SELECT todo_id, created_at, updated_at, label, completed FROM todos
+WHERE todo_id = $1 LIMIT 1
+`
+
+func (q *Queries) FindTodoById(ctx context.Context, todoID uuid.UUID) (Todo, error) {
+	row := q.db.QueryRowContext(ctx, findTodoById, todoID)
+	var i Todo
+	err := row.Scan(
+		&i.TodoID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Label,
+		&i.Completed,
+	)
+	return i, err
+}
+
+const listAllTodos = `-- name: ListAllTodos :many
+
+SELECT todo_id, created_at, updated_at, label, completed FROM todos
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListAllTodos(ctx context.Context) ([]Todo, error) {
+	rows, err := q.db.QueryContext(ctx, listAllTodos)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Todo
+	for rows.Next() {
+		var i Todo
+		if err := rows.Scan(
+			&i.TodoID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Label,
+			&i.Completed,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateTodo = `-- name: UpdateTodo :one
+
+UPDATE todos
+SET
+    updated_at = $2, 
+    label = $3, 
+    completed = $4
+WHERE todo_id = $1    
+RETURNING todo_id, created_at, updated_at, label, completed
+`
+
+type UpdateTodoParams struct {
+	TodoID    uuid.UUID
+	UpdatedAt time.Time
+	Label     string
+	Completed bool
+}
+
+func (q *Queries) UpdateTodo(ctx context.Context, arg UpdateTodoParams) (Todo, error) {
+	row := q.db.QueryRowContext(ctx, updateTodo,
+		arg.TodoID,
+		arg.UpdatedAt,
+		arg.Label,
+		arg.Completed,
+	)
+	var i Todo
+	err := row.Scan(
+		&i.TodoID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Label,
+		&i.Completed,
+	)
+	return i, err
+}
