@@ -47,6 +47,7 @@ func InitServer() {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
+	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(30)))
 
 	ctx := context.Background()
 
