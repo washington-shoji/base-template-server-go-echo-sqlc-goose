@@ -17,7 +17,7 @@ func InitTodoRouter(e *echo.Echo, ctx context.Context, q *database.Queries) {
 
 	group.POST("/create-todo", handler.CreateTodoHandler)
 	group.PUT("/update-todo/:todo-id", handler.UpdateTodoHandler)
-	group.DELETE("delete-todo/:todo-id", handler.DeleteTodoHandler)
+	group.DELETE("/delete-todo/:todo-id", handler.DeleteTodoHandler)
 	group.GET("/todo/:todo-id", handler.FindTodoByIdHandler)
 	group.GET("/todo", handler.ListAllTodosHandler)
 }
