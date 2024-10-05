@@ -2,11 +2,16 @@ package handlers
 
 import (
 	"go-echo-server-template/services"
+	"go-echo-server-template/utils"
 	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
+
+type successResponse struct {
+	Message string `json:"message"`
+}
 
 type TodoHandler struct {
 	TodoService services.TodoService
@@ -23,68 +28,70 @@ func (h *TodoHandler) CreateTodoHandler(ctx echo.Context) error {
 	err := ctx.Bind(&todoModel)
 	if err != nil {
 		log.Printf("binding error: %v", err)
-		return ctx.String(http.StatusBadRequest, "bad request - data malformed")
+		return utils.RespondWithError(ctx, http.StatusBadRequest, "bad request data malformed")
 	}
 
 	response, err := h.TodoService.CreateTodo(todoModel)
 	if err != nil {
 		log.Printf("service error: %v", err)
-		return ctx.String(http.StatusInternalServerError, "could not create todo")
+		return utils.RespondWithError(ctx, http.StatusInternalServerError, "could not create todo")
+
 	}
 
-	return ctx.JSON(http.StatusCreated, response)
+	return utils.RespondWithJSON(ctx, http.StatusCreated, response)
 }
 
 func (h *TodoHandler) UpdateTodoHandler(ctx echo.Context) error {
 	todoId := ctx.Param("todo-id")
 	if todoId == "" {
-		return ctx.String(http.StatusBadRequest, "bad request - data malformed")
+		return utils.RespondWithError(ctx, http.StatusBadRequest, "bad request data malformed")
 	}
 
 	todoModel := services.TodoParams{}
 	err := ctx.Bind(&todoModel)
 	if err != nil {
 		log.Printf("binding error: %v", err)
-		return ctx.String(http.StatusBadRequest, "bad request - data malformed")
+		return utils.RespondWithError(ctx, http.StatusBadRequest, "bad request data malformed")
 	}
 
 	response, err := h.TodoService.UpdateDoto(todoId, todoModel)
 	if err != nil {
 		log.Printf("service error: %v", err)
-		return ctx.String(http.StatusInternalServerError, "could not create todo")
+		return utils.RespondWithError(ctx, http.StatusInternalServerError, "could not update todo")
 	}
 
-	return ctx.JSON(http.StatusOK, response)
+	return utils.RespondWithJSON(ctx, http.StatusOK, response)
 }
 
 func (h *TodoHandler) DeleteTodoHandler(ctx echo.Context) error {
 	todoId := ctx.Param("todo-id")
 	if todoId == "" {
-		return ctx.String(http.StatusBadRequest, "bad request - data malformed")
+		return utils.RespondWithError(ctx, http.StatusBadRequest, "bad request data malformed")
 	}
 
 	err := h.TodoService.DeleteTodo(todoId)
 	if err != nil {
 		log.Printf("service error: %v", err)
-		return ctx.String(http.StatusInternalServerError, "could not delte todo")
+		return utils.RespondWithError(ctx, http.StatusInternalServerError, "could not delete todo")
 	}
 
-	return ctx.String(http.StatusOK, "todo deleted successfully")
+	return utils.RespondWithJSON(ctx, http.StatusOK, successResponse{Message: "todo deleted successfully"})
+
 }
 
 func (h *TodoHandler) FindTodoByIdHandler(ctx echo.Context) error {
 	todoId := ctx.Param("todo-id")
 	if todoId == "" {
-		return ctx.String(http.StatusBadRequest, "bad request - data malformed")
+		return utils.RespondWithError(ctx, http.StatusBadRequest, "bad request data malformed")
 	}
 
 	response, err := h.TodoService.FindTodoById(todoId)
 	if err != nil {
 		log.Printf("service error: %v", err)
-		return ctx.String(http.StatusInternalServerError, "could not find todo")
+		return utils.RespondWithError(ctx, http.StatusInternalServerError, "could not find todo")
 	}
 
-	return ctx.JSON(http.StatusOK, response)
+	return utils.RespondWithJSON(ctx, http.StatusOK, response)
 }
 
 func (h *TodoHandler) ListAllTodosHandler(ctx echo.Context) error {
@@ -92,8 +99,8 @@ func (h *TodoHandler) ListAllTodosHandler(ctx echo.Context) error {
 	response, err := h.TodoService.ListAllTodos()
 	if err != nil {
 		log.Printf("service error: %v", err)
-		return ctx.String(http.StatusInternalServerError, "could not fetch todos")
+		return utils.RespondWithError(ctx, http.StatusInternalServerError, "could not fetch todos")
 	}
 
-	return ctx.JSON(http.StatusOK, response)
+	return utils.RespondWithJSON(ctx, http.StatusOK, response)
 }
