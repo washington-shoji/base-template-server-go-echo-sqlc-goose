@@ -36,9 +36,10 @@ func InitServer() {
 
 	db := database.New(conn)
 
+	// Echo webframework
 	e := echo.New()
 
-	// Middleware
+	// Middlewares
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -51,6 +52,7 @@ func InitServer() {
 
 	// Routes
 	routes.HealthCheckRoutes(e, ctx, db)
+	routes.InitTodoRouter(e, ctx, db)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":" + port))
