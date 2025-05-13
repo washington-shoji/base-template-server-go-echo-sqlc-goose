@@ -6,6 +6,10 @@ go mod tidy
 
 go mod vendor
 
+## DB Connection
+
+postgresql://USERNAME:PASSWORD@HOST:PORT/DBNAME?sslmode=disable
+
 ## Goose commands
 
 ### Adding a new schema with sequence i.e. 000001...
