@@ -16,6 +16,10 @@ postgresql://USERNAME:PASSWORD@HOST:PORT/DBNAME?sslmode=disable
 
 goose -s create <schema-name> sql
 
+### Adding a new schema with sequence i.e. 000001[Schema_Name]
+
+goose -s create [Schema-Name] sql
+
 ### Generate migration for postgres
 
 <!-- Run the command in the same directory as the schema files -->
