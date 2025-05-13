@@ -16,7 +16,7 @@ postgresql://USERNAME:PASSWORD@HOST:PORT/DBNAME?sslmode=disable
 
 goose -s create <schema-name> sql
 
-### Adding a new schema with sequence i.e. 000001[Schema_Name]
+### Adding a new schema with sequence and name i.e. 000001[Schema_Name]
 
 goose -s create [Schema-Name] sql
 
