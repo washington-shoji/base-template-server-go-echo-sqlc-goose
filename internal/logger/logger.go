@@ -38,6 +38,13 @@ type LogEntry struct {
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
+// Logger wraps zap logger with additional context
+type Logger struct {
+	*zap.Logger
+	component string
+	traceID   string
+}
+
 var (
 	logger *zap.Logger
 	env    string
@@ -47,7 +54,16 @@ var (
 func Initialize(environment string) error {
 	env = environment
 
-	// Configure encoder
+	// Configure logging level based on environment
+	var level zapcore.Level
+	switch environment {
+	case "production":
+		level = zapcore.InfoLevel
+	default:
+		level = zapcore.DebugLevel
+	}
+
+	// Create encoder config
 	encoderConfig := zapcore.EncoderConfig{
 		TimeKey:        "timestamp",
 		LevelKey:       "level",
@@ -56,18 +72,10 @@ func Initialize(environment string) error {
 		MessageKey:     "message",
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeLevel:    zapcore.CapitalLevelEncoder,
 		EncodeTime:     zapcore.ISO8601TimeEncoder,
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
-	}
-
-	// Set log level based on environment
-	var level zapcore.Level
-	if environment == "production" {
-		level = zapcore.InfoLevel
-	} else {
-		level = zapcore.DebugLevel
 	}
 
 	// Create core
@@ -78,41 +86,65 @@ func Initialize(environment string) error {
 	)
 
 	// Create logger
-	logger = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+	logger = zap.New(core,
+		zap.AddCaller(),
+		zap.AddStacktrace(zapcore.ErrorLevel),
+	)
+
 	return nil
 }
 
-// WithContext creates a new logger with context values
+// WithContext creates a new logger with request context
 func WithContext(ctx context.Context, component string) *Logger {
-	traceID := getTraceID(ctx)
+	// Get trace ID from context or generate new one
+	var traceID string
+	if id := ctx.Value("request_id"); id != nil {
+		traceID = id.(string)
+	} else {
+		traceID = uuid.New().String()
+	}
+
 	return &Logger{
+		Logger:    logger,
 		component: component,
 		traceID:   traceID,
 	}
 }
 
-// Logger provides methods for structured logging
-type Logger struct {
-	component string
-	traceID   string
+// Debug logs a debug message
+func (l *Logger) Debug(msg string, metadata map[string]interface{}) {
+	l.log(DebugLevel, msg, nil, metadata)
 }
 
-// getTraceID extracts or generates a trace ID from context
-func getTraceID(ctx context.Context) string {
-	if traceID, ok := ctx.Value("trace_id").(string); ok {
-		return traceID
-	}
-	return uuid.New().String()
+// Info logs an info message
+func (l *Logger) Info(msg string, metadata map[string]interface{}) {
+	l.log(InfoLevel, msg, nil, metadata)
 }
 
-// log creates a structured log entry
-func (l *Logger) log(level LogLevel, message string, err error, metadata map[string]interface{}) {
+// Warn logs a warning message
+func (l *Logger) Warn(msg string, metadata map[string]interface{}) {
+	l.log(WarnLevel, msg, nil, metadata)
+}
+
+// Error logs an error message
+func (l *Logger) Error(msg string, err error, metadata map[string]interface{}) {
+	l.log(ErrorLevel, msg, err, metadata)
+}
+
+// Fatal logs a fatal message and exits
+func (l *Logger) Fatal(msg string, err error, metadata map[string]interface{}) {
+	l.log(FatalLevel, msg, err, metadata)
+	os.Exit(1)
+}
+
+// log handles the actual logging
+func (l *Logger) log(level LogLevel, msg string, err error, metadata map[string]interface{}) {
 	entry := LogEntry{
 		Timestamp:   time.Now().UTC().Format(time.RFC3339),
 		Level:       level,
-		Message:     message,
+		Message:     msg,
 		TraceID:     l.traceID,
-		Service:     "go-echo-server-template",
+		Service:     "todo-service",
 		Environment: env,
 		Component:   l.component,
 		Metadata:    metadata,
@@ -120,52 +152,30 @@ func (l *Logger) log(level LogLevel, message string, err error, metadata map[str
 
 	if err != nil {
 		entry.Error = err.Error()
-	}
-
-	if level == ErrorLevel || level == FatalLevel {
-		// Get stack trace
-		const depth = 32
-		var pcs [depth]uintptr
-		n := runtime.Callers(3, pcs[:])
-		frames := runtime.CallersFrames(pcs[:n])
-		stack := ""
-		for {
-			frame, more := frames.Next()
-			stack += fmt.Sprintf("%s\n\t%s:%d\n", frame.Function, frame.File, frame.Line)
-			if !more {
-				break
-			}
+		if level >= ErrorLevel {
+			// Capture stack trace for errors
+			buf := make([]byte, 1024)
+			n := runtime.Stack(buf, false)
+			entry.Stack = string(buf[:n])
 		}
-		entry.Stack = stack
 	}
 
-	// Convert to JSON
-	jsonData, _ := json.Marshal(entry)
-	fmt.Println(string(jsonData))
-}
-
-// Debug logs a debug message
-func (l *Logger) Debug(message string, metadata map[string]interface{}) {
-	l.log(DebugLevel, message, nil, metadata)
-}
-
-// Info logs an info message
-func (l *Logger) Info(message string, metadata map[string]interface{}) {
-	l.log(InfoLevel, message, nil, metadata)
-}
-
-// Warn logs a warning message
-func (l *Logger) Warn(message string, metadata map[string]interface{}) {
-	l.log(WarnLevel, message, nil, metadata)
-}
-
-// Error logs an error message
-func (l *Logger) Error(message string, err error, metadata map[string]interface{}) {
-	l.log(ErrorLevel, message, err, metadata)
-}
-
-// Fatal logs a fatal message and exits
-func (l *Logger) Fatal(message string, err error, metadata map[string]interface{}) {
-	l.log(FatalLevel, message, err, metadata)
-	os.Exit(1)
+	// Convert to JSON and log
+	if jsonData, err := json.Marshal(entry); err == nil {
+		switch level {
+		case DebugLevel:
+			l.Logger.Debug(string(jsonData))
+		case InfoLevel:
+			l.Logger.Info(string(jsonData))
+		case WarnLevel:
+			l.Logger.Warn(string(jsonData))
+		case ErrorLevel:
+			l.Logger.Error(string(jsonData))
+		case FatalLevel:
+			l.Logger.Fatal(string(jsonData))
+		}
+	} else {
+		// Fallback if JSON marshaling fails
+		fmt.Printf("Failed to marshal log entry: %v\n", err)
+	}
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"go-echo-server-template/internal/database"
-	appErrors "go-echo-server-template/internal/errors"
+	"go-echo-server-template/internal/errors"
 	"go-echo-server-template/internal/logger"
 	"time"
 
@@ -13,11 +13,11 @@ import (
 
 type TodoServiceImpl struct {
 	Context context.Context
-	Query   *database.Queries
+	Query   database.Querier
 	log     *logger.Logger
 }
 
-func NewTodoService(context context.Context, query *database.Queries) TodoService {
+func NewTodoService(context context.Context, query database.Querier) TodoService {
 	return &TodoServiceImpl{
 		Context: context,
 		Query:   query,
@@ -35,7 +35,7 @@ func (t *TodoServiceImpl) CreateTodo(reqModel TodoParams) (database.Todo, error)
 
 	// Validate input
 	if reqModel.Label == "" {
-		return database.Todo{}, appErrors.NewValidationError("Label is required", map[string]interface{}{
+		return database.Todo{}, errors.NewValidationError("Label is required", map[string]interface{}{
 			"field": "label",
 		})
 	}
@@ -53,7 +53,7 @@ func (t *TodoServiceImpl) CreateTodo(reqModel TodoParams) (database.Todo, error)
 		t.log.Error("Failed to create todo", err, map[string]interface{}{
 			"todo_id": model.TodoID,
 		})
-		return database.Todo{}, appErrors.NewInternalServerError(err, "Failed to create todo")
+		return database.Todo{}, errors.NewInternalError("Failed to create todo", err)
 	}
 
 	// Log successful todo creation with the generated ID
@@ -74,14 +74,14 @@ func (t *TodoServiceImpl) UpdateDoto(todoId string, reqModel TodoParams) (databa
 
 	// Validate input
 	if reqModel.Label == "" {
-		return database.Todo{}, appErrors.NewValidationError("Label is required", map[string]interface{}{
+		return database.Todo{}, errors.NewValidationError("Label is required", map[string]interface{}{
 			"field": "label",
 		})
 	}
 
 	todoUUID, err := uuid.Parse(todoId)
 	if err != nil {
-		return database.Todo{}, appErrors.NewBadRequestError("Invalid todo ID format", map[string]interface{}{
+		return database.Todo{}, errors.NewBadRequestError("Invalid todo ID format", map[string]interface{}{
 			"todo_id": todoId,
 		})
 	}
@@ -95,15 +95,15 @@ func (t *TodoServiceImpl) UpdateDoto(todoId string, reqModel TodoParams) (databa
 
 	result, err := t.Query.UpdateTodo(t.Context, model)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return database.Todo{}, appErrors.NewNotFoundError("Todo not found", map[string]interface{}{
+		if err == sql.ErrNoRows || err == database.ErrRecordNotFound {
+			return database.Todo{}, errors.NewNotFoundError("Todo not found", map[string]interface{}{
 				"todo_id": todoId,
 			})
 		}
 		t.log.Error("Failed to update todo", err, map[string]interface{}{
 			"todo_id": todoUUID,
 		})
-		return database.Todo{}, appErrors.NewInternalServerError(err, "Failed to update todo")
+		return database.Todo{}, errors.NewInternalError("Failed to update todo", err)
 	}
 
 	// Log successful todo update
@@ -122,22 +122,22 @@ func (t *TodoServiceImpl) DeleteTodo(todoId string) error {
 
 	todoUUID, err := uuid.Parse(todoId)
 	if err != nil {
-		return appErrors.NewBadRequestError("Invalid todo ID format", map[string]interface{}{
+		return errors.NewBadRequestError("Invalid todo ID format", map[string]interface{}{
 			"todo_id": todoId,
 		})
 	}
 
 	err = t.Query.DeleteTodo(t.Context, todoUUID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return appErrors.NewNotFoundError("Todo not found", map[string]interface{}{
+		if err == sql.ErrNoRows || err == database.ErrRecordNotFound {
+			return errors.NewNotFoundError("Todo not found", map[string]interface{}{
 				"todo_id": todoId,
 			})
 		}
 		t.log.Error("Failed to delete todo", err, map[string]interface{}{
 			"todo_id": todoUUID,
 		})
-		return appErrors.NewInternalServerError(err, "Failed to delete todo")
+		return errors.NewInternalError("Failed to delete todo", err)
 	}
 
 	// Log successful todo deletion
@@ -156,22 +156,22 @@ func (t *TodoServiceImpl) FindTodoById(todoId string) (database.Todo, error) {
 
 	todoUUID, err := uuid.Parse(todoId)
 	if err != nil {
-		return database.Todo{}, appErrors.NewBadRequestError("Invalid todo ID format", map[string]interface{}{
+		return database.Todo{}, errors.NewBadRequestError("Invalid todo ID format", map[string]interface{}{
 			"todo_id": todoId,
 		})
 	}
 
 	result, err := t.Query.FindTodoById(t.Context, todoUUID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return database.Todo{}, appErrors.NewNotFoundError("Todo not found", map[string]interface{}{
+		if err == sql.ErrNoRows || err == database.ErrRecordNotFound {
+			return database.Todo{}, errors.NewNotFoundError("Todo not found", map[string]interface{}{
 				"todo_id": todoId,
 			})
 		}
 		t.log.Error("Failed to find todo", err, map[string]interface{}{
 			"todo_id": todoUUID,
 		})
-		return database.Todo{}, appErrors.NewInternalServerError(err, "Failed to find todo")
+		return database.Todo{}, errors.NewInternalError("Failed to find todo", err)
 	}
 
 	// Log successful todo retrieval
@@ -189,7 +189,7 @@ func (t *TodoServiceImpl) ListAllTodos() ([]database.Todo, error) {
 	result, err := t.Query.ListAllTodos(t.Context)
 	if err != nil {
 		t.log.Error("Failed to list todos", err, nil)
-		return []database.Todo{}, appErrors.NewInternalServerError(err, "Failed to list todos")
+		return []database.Todo{}, errors.NewInternalError("Failed to list todos", err)
 	}
 
 	// Log successful listing with count of todos

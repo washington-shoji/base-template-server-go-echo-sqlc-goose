@@ -26,7 +26,7 @@ func ErrorHandler(err error, c echo.Context) {
 	if appErr, ok := IsAppError(err); ok {
 		response = &ErrorResponse{
 			Status:  appErr.StatusCode,
-			Code:    appErr.Code,
+			Code:    appErr.ErrorCode,
 			Message: appErr.Message,
 			Details: appErr.Details,
 		}
@@ -72,11 +72,6 @@ func ErrorHandler(err error, c echo.Context) {
 			log.Error("Failed to send error response", err, nil)
 		}
 	}
-}
-
-// HTTPErrorHandler creates a custom HTTP error handler for Echo
-func HTTPErrorHandler() echo.HTTPErrorHandler {
-	return ErrorHandler
 }
 
 // ValidationError represents validation errors
