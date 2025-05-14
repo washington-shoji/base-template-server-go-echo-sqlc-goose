@@ -1,46 +1,84 @@
 package server
 
 import (
-	"context"
-	"database/sql"
+	"fmt"
+	"go-echo-server-template/internal/config"
 	"go-echo-server-template/internal/database"
+	"go-echo-server-template/internal/errors"
+	"go-echo-server-template/internal/logger"
 	"go-echo-server-template/routes"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/time/rate"
-
-	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 )
 
-func InitServer() {
-	godotenv.Load(".env")
+// Start initializes and starts the server
+func Start() error {
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		fmt.Printf("Warning: .env file not found: %v\n", err)
+	}
 
+	// Initialize logger
+	if err := logger.Initialize(os.Getenv("APP_ENV")); err != nil {
+		return fmt.Errorf("failed to initialize logger: %v", err)
+	}
+
+	// Get port from environment variable or use default
 	port := os.Getenv("PORT")
 	if port == "" {
-		log.Fatal("PORT could not be found in the process enviroment")
+		port = "8080"
 	}
 
-	dbURL := os.Getenv("DB_URL")
-	if dbURL == "" {
-		log.Fatal("DB_URL could not be found in the process enviroment")
+	// Initialize database
+	dbConfig := &config.DatabaseConfig{
+		Host: os.Getenv("DB_HOST"),
+		Port: func() int {
+			p, _ := strconv.Atoi(os.Getenv("DB_PORT"))
+			if p == 0 {
+				return 5432
+			}
+			return p
+		}(), // Default to 5432 if not set
+		User:            os.Getenv("DB_USER"),
+		Password:        os.Getenv("DB_PASSWORD"),
+		DBName:          os.Getenv("DB_NAME"),
+		SSLMode:         "disable",
+		MaxOpenConns:    25,
+		MaxIdleConns:    25,
+		ConnMaxLifetime: 5 * time.Minute,
 	}
 
-	conn, err := sql.Open("postgres", dbURL)
+	db, err := database.Initialize(dbConfig)
 	if err != nil {
-		log.Fatal("cannot connect to the database: ", err)
+		return fmt.Errorf("failed to initialize database: %v", err)
 	}
 
-	db := database.New(conn)
+	// Create queries
+	queries := database.New(db)
 
-	// Echo webframework
+	// Create and configure server
+	e := NewServer()
+
+	// Initialize routes
+	InitializeRoutes(e, queries)
+
+	// Start server
+	return e.Start(":" + port)
+}
+
+// NewServer creates a new Echo server instance with middleware
+func NewServer() *echo.Echo {
 	e := echo.New()
+
+	// Set custom error handler
+	e.HTTPErrorHandler = errors.ErrorHandler
 
 	// Security Middleware
 	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
@@ -54,24 +92,26 @@ func InitServer() {
 	// Request ID Middleware for tracing
 	e.Use(middleware.RequestID())
 
-	// Logger Middleware with custom format
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: `{"time":"${time_rfc3339_nano}","id":"${id}","remote_ip":"${remote_ip}",` +
-			`"host":"${host}","method":"${method}","uri":"${uri}","user_agent":"${user_agent}",` +
-			`"status":${status},"error":"${error}","latency":${latency},"latency_human":"${latency_human}"` +
-			`,"bytes_in":${bytes_in},"bytes_out":${bytes_out}}` + "\n",
-		CustomTimeFormat: "2006-01-02 15:04:05.00000",
-	}))
+	// Custom Logger Middleware
+	e.Use(logger.LoggerMiddleware())
 
 	// Recover Middleware
 	e.Use(middleware.Recover())
 
 	// Body Limit Middleware to prevent large payload attacks
-	e.Use(middleware.BodyLimit(os.Getenv("BODY_LIMIT")))
+	bodyLimit := os.Getenv("BODY_LIMIT")
+	if bodyLimit == "" {
+		bodyLimit = "2M" // Default 2MB limit
+	}
+	e.Use(middleware.BodyLimit(bodyLimit))
 
 	// CORS Middleware with secure configuration
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	if allowedOrigins == "" {
+		allowedOrigins = "*" // Default allow all in development
+	}
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{os.Getenv("ALLOWED_ORIGINS")}, // Configure this in .env
+		AllowOrigins:     []string{allowedOrigins},
 		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete, http.MethodOptions},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -81,7 +121,13 @@ func InitServer() {
 
 	// Rate Limiter with more robust configuration
 	rateLimit, _ := strconv.Atoi(os.Getenv("RATE_LIMIT_REQUESTS"))
+	if rateLimit == 0 {
+		rateLimit = 100 // Default 100 requests per minute
+	}
 	burstLimit, _ := strconv.Atoi(os.Getenv("RATE_LIMIT_BURST"))
+	if burstLimit == 0 {
+		burstLimit = 50 // Default burst of 50 requests
+	}
 
 	store := middleware.NewRateLimiterMemoryStoreWithConfig(
 		middleware.RateLimiterMemoryStoreConfig{
@@ -90,16 +136,13 @@ func InitServer() {
 			ExpiresIn: time.Minute * 1,
 		},
 	)
-
 	e.Use(middleware.RateLimiter(store))
 
-	ctx := context.Background()
+	return e
+}
 
-	// Routes
-	routes.HealthCheckRoutes(e, ctx, db)
-	routes.InitTodoRouter(e, ctx, db)
-
-	// Start server
-	e.Logger.Fatal(e.Start(":" + port))
-	log.Printf("Server starting on port %v", port)
+// InitializeRoutes sets up all the routes for the server
+func InitializeRoutes(e *echo.Echo, queries *database.Queries) {
+	// Add the routes here
+	routes.RegisterTodoRoutes(e, queries)
 }
