@@ -86,11 +86,12 @@ func (t *TodoServiceImpl) UpdateDoto(todoId string, reqModel TodoParams) (databa
 		})
 	}
 
+	now := time.Now().UTC()
 	model := database.UpdateTodoParams{
 		TodoID:    todoUUID,
 		Label:     reqModel.Label,
 		Completed: reqModel.Completed,
-		UpdatedAt: time.Now().UTC(),
+		UpdatedAt: now,
 	}
 
 	result, err := t.Query.UpdateTodo(t.Context, model)
@@ -103,7 +104,7 @@ func (t *TodoServiceImpl) UpdateDoto(todoId string, reqModel TodoParams) (databa
 		t.log.Error("Failed to update todo", err, map[string]interface{}{
 			"todo_id": todoUUID,
 		})
-		return database.Todo{}, errors.NewInternalError("Failed to update todo", err)
+		return database.Todo{}, err
 	}
 
 	// Log successful todo update
@@ -137,7 +138,7 @@ func (t *TodoServiceImpl) DeleteTodo(todoId string) error {
 		t.log.Error("Failed to delete todo", err, map[string]interface{}{
 			"todo_id": todoUUID,
 		})
-		return errors.NewInternalError("Failed to delete todo", err)
+		return err
 	}
 
 	// Log successful todo deletion
@@ -171,7 +172,7 @@ func (t *TodoServiceImpl) FindTodoById(todoId string) (database.Todo, error) {
 		t.log.Error("Failed to find todo", err, map[string]interface{}{
 			"todo_id": todoUUID,
 		})
-		return database.Todo{}, errors.NewInternalError("Failed to find todo", err)
+		return database.Todo{}, err
 	}
 
 	// Log successful todo retrieval

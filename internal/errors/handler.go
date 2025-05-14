@@ -53,10 +53,10 @@ func ErrorHandler(err error, c echo.Context) {
 
 	// Log the error with context
 	log.Error("Request error", err, map[string]interface{}{
-		"status_code": response.Status,
 		"error_code":  response.Code,
-		"path":        c.Request().URL.Path,
 		"method":      c.Request().Method,
+		"path":        c.Request().URL.Path,
+		"status_code": httpStatus,
 	})
 
 	// Don't send error details in production

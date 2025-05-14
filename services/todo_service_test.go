@@ -131,6 +131,9 @@ func TestUpdateTodo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Add a small delay to ensure UpdatedAt will be different
+			time.Sleep(1 * time.Millisecond)
+
 			result, err := service.UpdateDoto(tt.todoID, tt.input)
 
 			if tt.wantErr {

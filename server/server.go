@@ -143,5 +143,6 @@ func NewServer() *echo.Echo {
 
 // InitializeRoutes sets up all the routes for the server
 func InitializeRoutes(e *echo.Echo, queries *database.Queries) {
+	// Add the routes here
 	routes.RegisterTodoRoutes(e, queries)
 }
