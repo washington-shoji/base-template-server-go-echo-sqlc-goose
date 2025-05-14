@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"go-echo-server-template/internal/config"
+	appErrors "go-echo-server-template/internal/errors"
 	"go-echo-server-template/internal/logger"
 	"go-echo-server-template/routes"
 	"log"
@@ -63,6 +64,9 @@ func InitServer() {
 
 	// Echo webframework
 	e := echo.New()
+
+	// Set custom error handler
+	e.HTTPErrorHandler = appErrors.HTTPErrorHandler()
 
 	// Security Middleware
 	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
