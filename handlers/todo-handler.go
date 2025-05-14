@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"go-echo-server-template/internal/logger"
 	"go-echo-server-template/services"
 	"go-echo-server-template/utils"
@@ -18,10 +19,10 @@ type TodoHandler struct {
 	log         *logger.Logger
 }
 
-func NewTodoHandler(todoService services.TodoService) *TodoHandler {
+func NewTodoHandler(ctx context.Context, todoService services.TodoService) *TodoHandler {
 	return &TodoHandler{
 		TodoService: todoService,
-		log:         logger.WithContext(nil, "todo_handler"), // Context will be set per request
+		log:         logger.WithContext(ctx, "todo_handler"),
 	}
 }
 

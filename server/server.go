@@ -2,8 +2,7 @@ package server
 
 import (
 	"context"
-	"database/sql"
-	"go-echo-server-template/internal/database"
+	"go-echo-server-template/internal/config"
 	"go-echo-server-template/internal/logger"
 	"go-echo-server-template/routes"
 	"log"
@@ -17,33 +16,50 @@ import (
 	"golang.org/x/time/rate"
 
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 )
 
 func InitServer() {
-	godotenv.Load(".env")
+	// Create a background context for server initialization
+	ctx := context.Background()
 
-	// Initialize logger
+	// Load environment variables
+	if err := godotenv.Load(".env"); err != nil {
+		log.Fatal("Error loading .env file: ", err)
+	}
+
+	// Initialize logger first
 	if err := logger.Initialize(os.Getenv("APP_ENV")); err != nil {
 		log.Fatal("Failed to initialize logger: ", err)
 	}
 
+	// Create a logger instance for server initialization
+	log := logger.WithContext(ctx, "server_init")
+
 	port := os.Getenv("PORT")
 	if port == "" {
-		log.Fatal("PORT could not be found in the process enviroment")
+		log.Error("PORT environment variable not found", nil, nil)
+		os.Exit(1)
 	}
 
-	dbURL := os.Getenv("DB_URL")
-	if dbURL == "" {
-		log.Fatal("DB_URL could not be found in the process enviroment")
-	}
-
-	conn, err := sql.Open("postgres", dbURL)
+	// Initialize database configuration
+	dbConfig, err := config.NewDatabaseConfig()
 	if err != nil {
-		log.Fatal("cannot connect to the database: ", err)
+		log.Error("Failed to create database configuration", err, nil)
+		os.Exit(1)
 	}
 
-	db := database.New(conn)
+	// Initialize database connection
+	db, err := config.InitializeDatabase(dbConfig)
+	if err != nil {
+		log.Error("Failed to initialize database", err, nil)
+		os.Exit(1)
+	}
+
+	log.Debug("Database connection established", map[string]interface{}{
+		"max_open_conns":    dbConfig.MaxOpenConns,
+		"max_idle_conns":    dbConfig.MaxIdleConns,
+		"conn_max_lifetime": dbConfig.ConnMaxLifetime,
+	})
 
 	// Echo webframework
 	e := echo.New()
@@ -93,13 +109,14 @@ func InitServer() {
 
 	e.Use(middleware.RateLimiter(store))
 
-	ctx := context.Background()
-
 	// Routes
 	routes.HealthCheckRoutes(e, ctx, db)
 	routes.InitTodoRouter(e, ctx, db)
 
+	log.Info("Server starting", map[string]interface{}{
+		"port": port,
+	})
+
 	// Start server
 	e.Logger.Fatal(e.Start(":" + port))
-	log.Printf("Server starting on port %v", port)
 }

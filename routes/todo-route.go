@@ -9,15 +9,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func InitTodoRouter(e *echo.Echo, ctx context.Context, q *database.Queries) {
-	todoService := services.NewTodoService(ctx, q)
-	handler := handlers.NewTodoHandler(todoService)
+func InitTodoRouter(e *echo.Echo, ctx context.Context, db *database.Queries) {
+	todoService := services.NewTodoService(ctx, db)
+	todoHandler := handlers.NewTodoHandler(ctx, todoService)
 
 	group := e.Group("api/v1")
 
-	group.POST("/create-todo", handler.CreateTodoHandler)
-	group.PUT("/update-todo/:todo-id", handler.UpdateTodoHandler)
-	group.DELETE("/delete-todo/:todo-id", handler.DeleteTodoHandler)
-	group.GET("/todo/:todo-id", handler.FindTodoByIdHandler)
-	group.GET("/todo", handler.ListAllTodosHandler)
+	group.POST("/create-todo", todoHandler.CreateTodoHandler)
+	group.PUT("/update-todo/:todo-id", todoHandler.UpdateTodoHandler)
+	group.DELETE("/delete-todo/:todo-id", todoHandler.DeleteTodoHandler)
+	group.GET("/todo/:todo-id", todoHandler.FindTodoByIdHandler)
+	group.GET("/todos", todoHandler.ListAllTodosHandler)
 }
