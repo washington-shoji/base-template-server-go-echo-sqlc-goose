@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"go-echo-server-template/internal/config"
 	"go-echo-server-template/internal/database"
@@ -144,5 +145,6 @@ func NewServer() *echo.Echo {
 // InitializeRoutes sets up all the routes for the server
 func InitializeRoutes(e *echo.Echo, queries *database.Queries) {
 	// Add the routes here
+	routes.HealthCheckRoutes(e, context.Background(), queries) // Use context.Background()
 	routes.RegisterTodoRoutes(e, queries)
 }

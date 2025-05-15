@@ -8,9 +8,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// HealthCheckRoutes sets up the health check routes
 func HealthCheckRoutes(e *echo.Echo, ctx context.Context, db *database.Queries) {
 
-	healthCheckHandler := handlers.NewFavoriteCoinsHandler()
+	healthCheckHandler := handlers.NewHealthCheckHandler()
 
-	e.GET("/", healthCheckHandler.ServerHealthCheck)
+	e.GET("/health", healthCheckHandler.CheckHealth)
+	e.GET("/", healthCheckHandler.CheckHealth) // Also handle root path as health check
 }
