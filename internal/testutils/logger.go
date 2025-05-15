@@ -5,8 +5,8 @@ import (
 )
 
 func init() {
-	// Initialize logger for tests
-	if err := logger.Initialize("test"); err != nil {
+	// Initialize logger for tests, using "DEBUG" as the default log level for tests.
+	if err := logger.Initialize("test", "DEBUG"); err != nil {
 		panic("Failed to initialize logger for tests: " + err.Error())
 	}
 }
