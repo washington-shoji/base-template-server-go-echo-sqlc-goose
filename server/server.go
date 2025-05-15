@@ -7,6 +7,7 @@ import (
 	"go-echo-server-template/internal/database"
 	"go-echo-server-template/internal/errors"
 	"go-echo-server-template/internal/logger"
+	"go-echo-server-template/internal/metrics"
 	"go-echo-server-template/routes"
 	"net/http"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/time/rate"
 )
 
@@ -80,6 +82,9 @@ func NewServer() *echo.Echo {
 
 	// Set custom error handler
 	e.HTTPErrorHandler = errors.ErrorHandler
+
+	// Metrics Middleware - should be early in the chain
+	e.Use(metrics.Middleware)
 
 	// Security Middleware
 	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
@@ -147,4 +152,7 @@ func InitializeRoutes(e *echo.Echo, queries *database.Queries) {
 	// Add the routes here
 	routes.HealthCheckRoutes(e, context.Background(), queries) // Use context.Background()
 	routes.RegisterTodoRoutes(e, queries)
+
+	// Add metrics endpoint, using the custom AppRegistry from the metrics package
+	e.GET("/metrics", echo.WrapHandler(promhttp.HandlerFor(metrics.AppRegistry, promhttp.HandlerOpts{})))
 }
