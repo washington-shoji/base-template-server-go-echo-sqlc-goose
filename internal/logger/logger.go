@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -46,20 +47,28 @@ type Logger struct {
 }
 
 var (
-	logger *zap.Logger
-	env    string
+	globalLogger *zap.Logger
+	appEnv       string
 )
 
-// Initialize sets up the logger with the specified environment
-func Initialize(environment string) error {
-	env = environment
+// Initialize sets up the logger with the specified environment and log level string.
+func Initialize(environment string, logLevelString string) error {
+	appEnv = environment
 
-	// Configure logging level based on environment
 	var level zapcore.Level
-	switch environment {
-	case "production":
+	switch strings.ToUpper(logLevelString) {
+	case "DEBUG":
+		level = zapcore.DebugLevel
+	case "INFO":
 		level = zapcore.InfoLevel
+	case "WARN":
+		level = zapcore.WarnLevel
+	case "ERROR":
+		level = zapcore.ErrorLevel
+	case "FATAL":
+		level = zapcore.FatalLevel
 	default:
+		fmt.Printf("Warning: Invalid LOG_LEVEL '%s', defaulting to DEBUG\n", logLevelString)
 		level = zapcore.DebugLevel
 	}
 
@@ -86,7 +95,7 @@ func Initialize(environment string) error {
 	)
 
 	// Create logger
-	logger = zap.New(core,
+	globalLogger = zap.New(core,
 		zap.AddCaller(),
 		zap.AddStacktrace(zapcore.ErrorLevel),
 	)
@@ -105,7 +114,7 @@ func WithContext(ctx context.Context, component string) *Logger {
 	}
 
 	return &Logger{
-		Logger:    logger,
+		Logger:    globalLogger,
 		component: component,
 		traceID:   traceID,
 	}
@@ -145,7 +154,7 @@ func (l *Logger) log(level LogLevel, msg string, err error, metadata map[string]
 		Message:     msg,
 		TraceID:     l.traceID,
 		Service:     "todo-service",
-		Environment: env,
+		Environment: appEnv,
 		Component:   l.component,
 		Metadata:    metadata,
 	}

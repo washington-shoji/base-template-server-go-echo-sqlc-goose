@@ -25,6 +25,7 @@ var (
 	testDB     *sql.DB
 	queries    *database.Queries
 	container  testcontainers.Container
+	appConfig  *config.AppConfig // Store loaded config for tests
 )
 
 func setupTestContainer(ctx context.Context) (testcontainers.Container, error) {
@@ -53,33 +54,12 @@ func setupTestContainer(ctx context.Context) (testcontainers.Container, error) {
 	return container, nil
 }
 
-func setupTestDatabase(ctx context.Context, container testcontainers.Container) (*sql.DB, error) {
-	mappedPort, err := container.MappedPort(ctx, "5432")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get container external port: %v", err)
-	}
-
-	host, err := container.Host(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get container host: %v", err)
-	}
-
-	dbConfig := &config.DatabaseConfig{
-		Host:            host,
-		Port:            mappedPort.Int(),
-		User:            "test",
-		Password:        "test",
-		DBName:          "test_db",
-		SSLMode:         "disable",
-		MaxOpenConns:    25,
-		MaxIdleConns:    25,
-		ConnMaxLifetime: 5 * time.Minute,
-	}
-
-	// Initialize database with retries
+func setupTestDatabase(ctx context.Context, dbCfg *config.DatabaseConfig) (*sql.DB, error) {
+	// Initialize database with retries using the provided dbCfg
 	var db *sql.DB
+	var err error // Define err once for this function scope
 	for i := 0; i < 5; i++ {
-		db, err = database.Initialize(dbConfig)
+		db, err = database.Initialize(dbCfg)
 		if err == nil {
 			break
 		}
@@ -90,7 +70,7 @@ func setupTestDatabase(ctx context.Context, container testcontainers.Container) 
 	}
 
 	// Run migrations
-	if err := goose.SetDialect("postgres"); err != nil {
+	if err = goose.SetDialect("postgres"); err != nil { // Assign to existing err
 		return nil, fmt.Errorf("failed to set dialect: %v", err)
 	}
 
@@ -99,9 +79,8 @@ func setupTestDatabase(ctx context.Context, container testcontainers.Container) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get working directory: %v", err)
 	}
-	// Go up one directory level since we're in tests/integration
 	projectRoot := filepath.Join(workDir, "..", "..")
-	if err := goose.Up(db, filepath.Join(projectRoot, "sql", "schema")); err != nil {
+	if err = goose.Up(db, filepath.Join(projectRoot, "sql", "schema")); err != nil { // Assign to existing err
 		return nil, fmt.Errorf("failed to run migrations: %v", err)
 	}
 
@@ -109,47 +88,67 @@ func setupTestDatabase(ctx context.Context, container testcontainers.Container) 
 }
 
 func TestMain(m *testing.M) {
-	// Initialize logger
-	if err := logger.Initialize("test"); err != nil {
+	var err error // Define err once for TestMain scope
+	appConfig, err = config.LoadConfig()
+	if err != nil {
+		fmt.Printf("Failed to load config for tests: %v\n", err)
+		os.Exit(1)
+	}
+	appConfig.AppEnv = "test"
+	appConfig.Logger.Level = "DEBUG"
+
+	if err = logger.Initialize(appConfig.AppEnv, appConfig.Logger.Level); err != nil { // Assign to existing err
 		fmt.Printf("Failed to initialize logger: %v\n", err)
 		os.Exit(1)
 	}
 
 	ctx := context.Background()
 
-	// Start PostgreSQL container
-	var err error
 	container, err = setupTestContainer(ctx)
 	if err != nil {
 		fmt.Printf("Failed to setup test container: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Setup test database
-	testDB, err = setupTestDatabase(ctx, container)
-	if err != nil {
-		fmt.Printf("Failed to setup test database: %v\n", err)
+	// Override database config for test container
+	mappedPort, portErr := container.MappedPort(ctx, "5432")
+	if portErr != nil {
+		fmt.Printf("Failed to get container mapped port: %v\n", portErr)
 		container.Terminate(ctx)
 		os.Exit(1)
 	}
+	host, hostErr := container.Host(ctx)
+	if hostErr != nil {
+		fmt.Printf("Failed to get container host: %v\n", hostErr)
+		container.Terminate(ctx)
+		os.Exit(1)
+	}
+	appConfig.Database.Host = host
+	appConfig.Database.Port = mappedPort.Int()
+	appConfig.Database.User = "test"
+	appConfig.Database.Password = "test"
+	appConfig.Database.DBName = "test_db"
 
-	// Initialize queries
+	testDB, err = setupTestDatabase(ctx, &appConfig.Database)
+	if err != nil {
+		fmt.Printf("Failed to setup test database: %v\n", err)
+		if container != nil {
+			container.Terminate(ctx)
+		}
+		os.Exit(1)
+	}
+
 	queries = database.New(testDB)
-
-	// Setup test server
-	testServer = server.NewServer()
+	testServer = server.NewServer(appConfig)
 	server.InitializeRoutes(testServer, queries)
 
-	// Run tests
 	code := m.Run()
 
-	// Cleanup
 	if testDB != nil {
 		testDB.Close()
 	}
 	if container != nil {
 		container.Terminate(ctx)
 	}
-
 	os.Exit(code)
 }
