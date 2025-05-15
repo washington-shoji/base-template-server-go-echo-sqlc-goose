@@ -47,3 +47,19 @@ goose <database-string> down-to <migration-version>
 ## SQLC commands
 
 sqlc generate
+
+## How to Generate and View Coverage Reports
+
+### Run test with coverage
+
+go test ./... -coverprofile=coverage.out
+
+### View HTML Report
+
+go tool cover -html=coverage.out -o coverage.html
+
+### View Text Summary (Optional)
+
+<!-- For a quick command-line summary of coverage percentage per function: -->
+
+go tool cover -func=coverage.out
