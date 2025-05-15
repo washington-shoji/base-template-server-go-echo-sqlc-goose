@@ -1,0 +1,4 @@
+scrape_configs:
+  - job_name: 'go-echo-server-template'
+    static_configs:
+      - targets: ['localhost:7171'] # Replace with your app's host and port if different
