@@ -154,5 +154,6 @@ func InitializeRoutes(e *echo.Echo, queries *database.Queries) {
 	routes.RegisterTodoRoutes(e, queries)
 
 	// Add metrics endpoint, using the custom AppRegistry from the metrics package
+	// TODO: When doing the implementation, add security priority for metrics endpoint so that it is not exposed to the public
 	e.GET("/metrics", echo.WrapHandler(promhttp.HandlerFor(metrics.AppRegistry, promhttp.HandlerOpts{})))
 }
