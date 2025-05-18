@@ -224,6 +224,25 @@ Here's a quick guide to adding a new feature or domain (e.g., "Products"):
 
 Information on how to generate and access API documentation (e.g., using Swagger/OpenAPI with tools like `swaggo`) will be added here.
 
+## Important Notice
+
+### Production Usage
+⚠️ **WARNING**: This is a starter template project open to the public and is **NOT** intended to be used directly in production environments. While it provides a foundation for building production applications, it should be thoroughly reviewed, modified, and hardened according to your specific security and business requirements before any production deployment.
+
+### Vendor Dependencies Notice
+This project uses `go mod vendor` which includes a `vendor` directory containing all dependencies. Please be aware:
+
+- The `vendor` directory contains third-party code that may need security review
+- Dependencies in the vendor directory may become outdated and require manual updates
+- It's your responsibility to:
+  - Review and audit all vendored dependencies
+  - Keep dependencies up to date
+  - Check for security vulnerabilities
+  - Ensure compliance with license requirements of vendored packages
+  - Consider whether to continue using vendored dependencies or switch to direct module downloads
+
+Consider using tools like `govulncheck` or other security scanning tools to verify the safety of dependencies before using them in your project.
+
 ## Disclaimer
 
 THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
