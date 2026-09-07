@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.1"
+      - name: Install Tailwind CLI
+        run: make tools
+      - name: CSS drift check
+        run: make css-check
+      - name: Unit tests
+        run: go test ./internal/...
