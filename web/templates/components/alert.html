@@ -1,0 +1,13 @@
+{{/* components/alert.html — dict: Type (info|success|warning|danger|error), Message, Title */}}
+{{$type := .Type}}
+{{if not $type}}{{$type = "info"}}{{end}}
+{{if eq $type "error"}}{{$type = "danger"}}{{end}}
+{{$styles := "border-border bg-surface-muted text-text"}}
+{{if eq $type "success"}}{{$styles = "border-success/40 bg-success/10 text-success"}}{{end}}
+{{if eq $type "danger"}}{{$styles = "border-danger/40 bg-danger/10 text-danger"}}{{end}}
+{{if eq $type "warning"}}{{$styles = "border-warning/40 bg-warning/10 text-warning"}}{{end}}
+{{if eq $type "info"}}{{$styles = "border-primary/30 bg-primary/5 text-text"}}{{end}}
+<div role="alert" class="rounded-md border px-3 py-2 text-sm {{$styles}}">
+  {{if .Title}}<p class="font-medium">{{.Title}}</p>{{end}}
+  <p>{{.Message}}</p>
+</div>

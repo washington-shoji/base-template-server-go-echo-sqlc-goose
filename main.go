@@ -1,49 +1,43 @@
 package main
 
+// Compatibility entrypoint. Prefer: go run ./cmd/server
+
 import (
 	"context"
 	"fmt"
-	"go-echo-server-template/internal/logger"
-	"go-echo-server-template/server"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
+
+	"go-echo-server-template/internal/app"
+	"go-echo-server-template/internal/platform/config"
+	"go-echo-server-template/internal/platform/logging"
 )
 
 func main() {
-	e, db, err := server.Start()
+	cfg, err := config.Load()
 	if err != nil {
-		// Use a basic fmt.Printf here as logger might not be initialized yet
-		// or if server.Start() failed before logger initialization.
-		fmt.Fprintf(os.Stderr, "Failed to start server: %v\n", err)
+		fmt.Fprintf(os.Stderr, "config: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Wait for interrupt signal to gracefully shutdown the server with a timeout.
+	application, err := app.New(cfg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "app init: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := application.Start(context.Background()); err != nil {
+		fmt.Fprintf(os.Stderr, "start: %v\n", err)
+		os.Exit(1)
+	}
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	<-quit // Block until a signal is received
+	<-quit
 
-	logger.WithContext(context.Background(), "shutdown").Info("Shutting down server...", nil)
-
-	// Create a context with a timeout for the shutdown.
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.HTTP.ShutdownTimeout)
 	defer cancel()
-
-	// Shutdown the Echo server.
-	if err := e.Shutdown(ctx); err != nil {
-		logger.WithContext(context.Background(), "shutdown").Error("Server shutdown failed", err, nil)
-	} else {
-		logger.WithContext(context.Background(), "shutdown").Info("Server gracefully stopped.", nil)
-	}
-
-	// Close the database connection.
-	if db != nil {
-		if err := db.Close(); err != nil {
-			logger.WithContext(context.Background(), "shutdown").Error("Failed to close database connection", err, nil)
-		} else {
-			logger.WithContext(context.Background(), "shutdown").Info("Database connection closed.", nil)
-		}
-	}
+	logging.WithContext(shutdownCtx, "shutdown").Info("Shutting down", nil)
+	_ = application.Shutdown(shutdownCtx)
 }

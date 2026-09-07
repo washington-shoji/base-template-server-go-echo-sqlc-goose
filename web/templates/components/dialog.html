@@ -1,0 +1,8 @@
+{{/* components/dialog.html — dict: ID, Title, Body */}}
+<dialog id="{{.ID}}" class="w-full max-w-md rounded-lg border border-border bg-surface p-0 text-text shadow-sm backdrop:bg-black/40">
+  <form method="dialog" class="border-b border-border px-4 py-3 flex items-center justify-between">
+    <h2 class="text-base font-semibold" id="{{.ID}}-title">{{.Title}}</h2>
+    <button type="submit" class="rounded-md px-2 py-1 text-sm text-text-secondary hover:bg-surface-muted" aria-label="Close">✕</button>
+  </form>
+  <div class="px-4 py-4 text-sm">{{.Body}}</div>
+</dialog>

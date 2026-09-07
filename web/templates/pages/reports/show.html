@@ -1,0 +1,7 @@
+{{template "components/page-header.html" (dict "Title" "Report" "Description" .Report.Type)}}
+
+<div class="mb-4">
+  {{template "components/button.html" (dict "Label" "Back to reports" "Href" "/app/reports" "Variant" "ghost" "Size" "sm")}}
+</div>
+
+{{template "fragments/reports/status.html" .}}

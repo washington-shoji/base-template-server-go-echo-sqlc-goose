@@ -1,0 +1,10 @@
+{{/* components/page-header.html — dict: Title, Description, Action (template.HTML optional via ActionLabel/ActionHref) */}}
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight text-text">{{.Title}}</h1>
+    {{if .Description}}<p class="mt-1 text-sm text-text-secondary">{{.Description}}</p>{{end}}
+  </div>
+  {{if and .ActionLabel .ActionHref}}
+    {{template "components/button.html" (dict "Label" .ActionLabel "Href" .ActionHref "Variant" "primary")}}
+  {{end}}
+</div>

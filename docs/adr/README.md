@@ -1,0 +1,17 @@
+# ADR index
+
+1. [Modular monolith](001-modular-monolith.md)
+2. [Echo retained](002-echo-retained.md)
+3. [REST + htmx dual delivery](003-dual-delivery.md)
+4. [One Postgres + domain schemas](004-postgres-schemas.md)
+5. [sqlc per-domain Store](005-sqlc-store.md)
+6. [In-process events + Postgres jobs](006-events-jobs.md)
+7. [Auth: sessions + bearer](007-auth.md)
+8. [Legacy Todo routes aliased](008-todo-api-compat.md)
+9. [No auto-migrate on boot](009-no-auto-migrate.md)
+10. [UI foundation: template + htmx + Tailwind standalone](010-ui-foundation.md)
+11. [htmx vendored locally](011-htmx-vendoring.md)
+12. [Generated CSS committed](012-css-commit-policy.md)
+13. [Cookie flash + FormErrors](013-flash-and-form-errors.md)
+14. [Embed web assets](014-embed-web-assets.md)
+15. [Frontend escape hatch](015-frontend-escape-hatch.md)

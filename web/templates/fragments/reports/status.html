@@ -1,0 +1,24 @@
+<div id="report-status"
+  class="space-y-3 rounded-lg border border-border bg-surface p-4"
+  aria-live="polite"
+  {{if or (eq .Report.Status "pending") (eq .Report.Status "processing")}}
+  hx-get="/app/reports/{{.Report.ReportID}}/status"
+  hx-trigger="every 2s"
+  hx-swap="outerHTML"
+  {{end}}
+>
+  <div class="flex flex-wrap items-center gap-3">
+    <span class="text-sm font-medium text-text-secondary">Status</span>
+    {{template "components/status-badge.html" .Report.Status}}
+    {{if or (eq .Report.Status "pending") (eq .Report.Status "processing")}}
+      {{template "components/spinner.html" .}}
+    {{end}}
+  </div>
+  <p class="text-sm"><span class="text-text-secondary">Type:</span> {{.Report.Type}}</p>
+  {{if eq .Report.Status "completed"}}
+  <pre class="overflow-x-auto rounded-md bg-surface-muted p-3 text-sm text-text">{{.Report.Result}}</pre>
+  {{end}}
+  {{if eq .Report.Status "failed"}}
+    {{template "components/alert.html" (dict "Type" "danger" "Title" .Report.FailureCode "Message" .Report.FailureReason)}}
+  {{end}}
+</div>

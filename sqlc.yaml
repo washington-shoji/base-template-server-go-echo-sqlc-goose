@@ -1,8 +1,33 @@
 version: "2"
 sql:
-  - schema: "sql/schema"
-    queries: "sql/queries"
-    engine: "postgresql"
+  - engine: "postgresql"
+    schema:
+      - "sql/migrations/00001_todos_schema.sql"
+    queries: "sql/queries/todos"
     gen:
       go:
-        out: "internal/database"
+        package: "postgres"
+        out: "internal/todos/postgres"
+        sql_package: "database/sql"
+        emit_json_tags: true
+  - engine: "postgresql"
+    schema:
+      - "sql/migrations/00002_auth_schema.sql"
+    queries: "sql/queries/auth"
+    gen:
+      go:
+        package: "postgres"
+        out: "internal/auth/postgres"
+        sql_package: "database/sql"
+        emit_json_tags: true
+  - engine: "postgresql"
+    schema:
+      - "sql/migrations/00004_reports_schema.sql"
+      - "sql/migrations/00005_reports_lifecycle.sql"
+    queries: "sql/queries/reports"
+    gen:
+      go:
+        package: "postgres"
+        out: "internal/reports/postgres"
+        sql_package: "database/sql"
+        emit_json_tags: true

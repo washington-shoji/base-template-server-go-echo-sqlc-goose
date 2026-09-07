@@ -1,0 +1,14 @@
+{{/* components/input.html — dict: Name, Type, Value, Placeholder, Required, Invalid, DescribedBy, Class */}}
+{{$type := .Type}}
+{{if not $type}}{{$type = "text"}}{{end}}
+<input
+  id="{{.Name}}"
+  name="{{.Name}}"
+  type="{{$type}}"
+  value="{{.Value}}"
+  {{if .Placeholder}}placeholder="{{.Placeholder}}"{{end}}
+  {{if .Required}}required{{end}}
+  {{if .Invalid}}aria-invalid="true"{{end}}
+  {{if .DescribedBy}}aria-describedby="{{.DescribedBy}}"{{end}}
+  class="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-secondary focus:border-primary {{.Class}}"
+>

@@ -1,0 +1,16 @@
+{{/* components/field.html — dict: Name, Label, Error, Help, Input (template.HTML) */}}
+{{$id := .Name}}
+{{$errID := printf "%s-error" $id}}
+{{$helpID := printf "%s-help" $id}}
+<div class="space-y-1">
+  {{if .Label}}
+  <label for="{{$id}}" class="block text-sm font-medium text-text">{{.Label}}</label>
+  {{end}}
+  {{.Input}}
+  {{if .Help}}
+  <p id="{{$helpID}}" class="text-xs text-text-secondary">{{.Help}}</p>
+  {{end}}
+  {{if .Error}}
+  <p id="{{$errID}}" class="text-xs text-danger" role="alert">{{.Error}}</p>
+  {{end}}
+</div>

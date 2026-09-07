@@ -1,0 +1,5 @@
+<section class="rounded-lg border border-border bg-surface p-6 text-center">
+  <h1 class="text-xl font-semibold">Bad request</h1>
+  <p class="mt-2 text-sm text-text-secondary">{{.Message}}</p>
+  <p class="mt-6">{{template "components/button.html" (dict "Label" "Go home" "Href" "/app/todos" "Variant" "secondary")}}</p>
+</section>

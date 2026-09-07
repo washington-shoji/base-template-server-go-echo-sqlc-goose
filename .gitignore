@@ -3,3 +3,9 @@
 .env
 
 test-api.http
+
+# Local tool binaries (Tailwind standalone CLI)
+.tools/
+
+# Built Go binaries
+bin/

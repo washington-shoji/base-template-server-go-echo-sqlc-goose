@@ -1,0 +1,32 @@
+{{if not .Todos}}
+  {{template "components/empty-state.html" (dict "Title" "No todos yet" "Message" "Add your first todo using the form above.")}}
+{{else}}
+<ul class="divide-y divide-border rounded-lg border border-border bg-surface" role="list">
+  {{range .Todos}}
+  <li class="flex items-center justify-between gap-3 px-3 py-2">
+    <span class="text-sm {{if .Completed}}text-text-secondary line-through{{end}}">{{.Label}}</span>
+    <button
+      type="button"
+      class="rounded-md border border-border px-2 py-1 text-xs text-danger hover:bg-danger/10"
+      data-dialog-open="todo-delete-dialog"
+      data-delete-url="/app/todos/{{.TodoID}}"
+      aria-label="Delete {{.Label}}"
+    >Delete</button>
+  </li>
+  {{end}}
+</ul>
+<dialog id="todo-delete-dialog" class="w-full max-w-sm rounded-lg border border-border bg-surface p-0 text-text shadow-sm backdrop:bg-black/40"
+  data-confirm-target="#todo-list"
+  data-csrf="{{.CSRF}}">
+  <div class="border-b border-border px-4 py-3">
+    <h2 class="text-base font-semibold">Delete todo?</h2>
+  </div>
+  <div class="px-4 py-4 text-sm text-text-secondary">
+    <p>This cannot be undone.</p>
+  </div>
+  <div class="flex justify-end gap-2 border-t border-border px-4 py-3">
+    <button type="button" data-dialog-close="todo-delete-dialog" class="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted">Cancel</button>
+    <button type="button" data-dialog-confirm="todo-delete-dialog" class="rounded-md bg-danger px-3 py-2 text-sm font-medium text-danger-fg">Delete</button>
+  </div>
+</dialog>
+{{end}}

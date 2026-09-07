@@ -1,0 +1,8 @@
+{{/* components/table.html — dict: Caption, Headers ([]string optional via .HeaderHTML), Body */}}
+<div class="overflow-x-auto rounded-lg border border-border">
+  <table class="min-w-full divide-y divide-border text-left text-sm">
+    {{if .Caption}}<caption class="sr-only">{{.Caption}}</caption>{{end}}
+    {{if .HeaderHTML}}<thead class="bg-surface-muted text-text-secondary">{{.HeaderHTML}}</thead>{{end}}
+    <tbody class="divide-y divide-border bg-surface">{{.Body}}</tbody>
+  </table>
+</div>

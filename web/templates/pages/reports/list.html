@@ -1,0 +1,21 @@
+{{template "components/page-header.html" (dict "Title" "Reports" "Description" "Async workflow reference with status polling.")}}
+
+<form
+  hx-post="/app/reports"
+  hx-target="#report-list"
+  hx-swap="innerHTML"
+  hx-disabled-elt="find button[type=submit]"
+  class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end"
+>
+  {{template "components/csrf-field.html" .CSRF}}
+  <input type="hidden" name="type" value="todo-summary">
+  <p class="flex-1 text-sm text-text-secondary">Generate a <strong class="text-text">todo-summary</strong> report. Creation returns quickly; generation runs in the background.</p>
+  <button type="submit" class="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-fg hover:opacity-90 disabled:opacity-60">
+    <span class="htmx-indicator mr-2 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
+    Start report
+  </button>
+</form>
+
+<div id="report-list">
+  {{template "fragments/reports/list.html" .}}
+</div>

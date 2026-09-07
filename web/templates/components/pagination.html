@@ -1,0 +1,10 @@
+{{/* components/pagination.html — stub for future lists; dict: Page, TotalPages, PrevHref, NextHref */}}
+{{if and .TotalPages (gt .TotalPages 1)}}
+<nav class="mt-4 flex items-center justify-between text-sm" aria-label="Pagination">
+  <span class="text-text-secondary">Page {{.Page}} of {{.TotalPages}}</span>
+  <div class="flex gap-2">
+    {{if .PrevHref}}<a class="rounded-md border border-border px-2 py-1 no-underline hover:bg-surface-muted" href="{{.PrevHref}}">Previous</a>{{end}}
+    {{if .NextHref}}<a class="rounded-md border border-border px-2 py-1 no-underline hover:bg-surface-muted" href="{{.NextHref}}">Next</a>{{end}}
+  </div>
+</nav>
+{{end}}

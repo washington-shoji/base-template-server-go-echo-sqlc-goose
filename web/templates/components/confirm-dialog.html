@@ -1,0 +1,17 @@
+{{/* components/confirm-dialog.html — dict: ID, Title, Message, ConfirmLabel, CancelLabel */}}
+{{$confirm := .ConfirmLabel}}
+{{if not $confirm}}{{$confirm = "Confirm"}}{{end}}
+{{$cancel := .CancelLabel}}
+{{if not $cancel}}{{$cancel = "Cancel"}}{{end}}
+<dialog id="{{.ID}}" class="w-full max-w-sm rounded-lg border border-border bg-surface p-0 text-text shadow-sm backdrop:bg-black/40">
+  <div class="px-4 py-3 border-b border-border">
+    <h2 class="text-base font-semibold" id="{{.ID}}-title">{{.Title}}</h2>
+  </div>
+  <div class="px-4 py-4 text-sm text-text-secondary">
+    <p>{{.Message}}</p>
+  </div>
+  <div class="flex justify-end gap-2 border-t border-border px-4 py-3">
+    <button type="button" data-dialog-close="{{.ID}}" class="inline-flex items-center rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted">{{$cancel}}</button>
+    <button type="button" data-dialog-confirm="{{.ID}}" class="inline-flex items-center rounded-md bg-danger px-3 py-2 text-sm font-medium text-danger-fg hover:opacity-90">{{$confirm}}</button>
+  </div>
+</dialog>

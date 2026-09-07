@@ -1,0 +1,5 @@
+{{/* components/card.html — dict: Title, Body (HTML or use nested content via .Content string) */}}
+<section class="rounded-lg border border-border bg-surface p-4 shadow-sm">
+  {{if .Title}}<h2 class="mb-2 text-base font-semibold text-text">{{.Title}}</h2>{{end}}
+  {{if .Body}}<div class="text-sm text-text-secondary">{{.Body}}</div>{{end}}
+</section>

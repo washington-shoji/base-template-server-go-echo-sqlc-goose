@@ -1,0 +1,9 @@
+{{/* components/badge.html — dict: Label, Tone (neutral|primary|success|warning|danger) */}}
+{{$tone := .Tone}}
+{{if not $tone}}{{$tone = "neutral"}}{{end}}
+{{$styles := "bg-surface-muted text-text-secondary"}}
+{{if eq $tone "primary"}}{{$styles = "bg-primary/15 text-primary"}}{{end}}
+{{if eq $tone "success"}}{{$styles = "bg-success/15 text-success"}}{{end}}
+{{if eq $tone "warning"}}{{$styles = "bg-warning/15 text-warning"}}{{end}}
+{{if eq $tone "danger"}}{{$styles = "bg-danger/15 text-danger"}}{{end}}
+<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{$styles}}">{{.Label}}</span>

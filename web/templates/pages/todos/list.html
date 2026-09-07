@@ -1,0 +1,38 @@
+{{template "components/page-header.html" (dict "Title" "Todos" "Description" "Simple CRUD reference UI.")}}
+
+{{if .Errors.Global}}
+  <div class="mb-4">{{template "components/alert.html" (dict "Type" "danger" "Message" .Errors.Global)}}</div>
+{{end}}
+
+<form
+  id="todo-create-form"
+  hx-post="/app/todos"
+  hx-target="#todo-list"
+  hx-swap="innerHTML"
+  hx-disabled-elt="find button[type=submit]"
+  class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end"
+>
+  {{template "components/csrf-field.html" .CSRF}}
+  <div class="flex-1 space-y-1">
+    <label for="label" class="block text-sm font-medium">Label</label>
+    <input
+      id="label"
+      name="label"
+      type="text"
+      value="{{.Form.Label}}"
+      required
+      placeholder="New todo"
+      {{if index .Errors.Fields "label"}}aria-invalid="true" aria-describedby="label-error"{{end}}
+      class="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+    >
+    {{with index .Errors.Fields "label"}}<p id="label-error" class="text-xs text-danger" role="alert">{{.}}</p>{{end}}
+  </div>
+  <button type="submit" class="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-fg hover:opacity-90 disabled:opacity-60">
+    <span class="htmx-indicator mr-2 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
+    Add
+  </button>
+</form>
+
+<div id="todo-list">
+  {{template "fragments/todos/list.html" .}}
+</div>

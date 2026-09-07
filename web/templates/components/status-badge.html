@@ -1,0 +1,9 @@
+{{/* components/status-badge.html — expects status string as . */}}
+{{$status := .}}
+{{$tone := "neutral"}}
+{{$label := $status}}
+{{if eq $status "pending"}}{{$tone = "warning"}}{{$label = "Pending"}}{{end}}
+{{if eq $status "processing"}}{{$tone = "primary"}}{{$label = "Processing"}}{{end}}
+{{if eq $status "completed"}}{{$tone = "success"}}{{$label = "Completed"}}{{end}}
+{{if eq $status "failed"}}{{$tone = "danger"}}{{$label = "Failed"}}{{end}}
+{{template "components/badge.html" (dict "Label" $label "Tone" $tone)}}

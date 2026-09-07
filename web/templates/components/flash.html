@@ -1,0 +1,8 @@
+{{/* components/flash.html — expects []httpx.Flash */}}
+{{if .}}
+<div class="mb-4 space-y-2" id="flash-messages" data-flash>
+  {{range .}}
+    {{template "components/alert.html" (dict "Type" .Type "Message" .Message)}}
+  {{end}}
+</div>
+{{end}}

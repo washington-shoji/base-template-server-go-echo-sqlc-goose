@@ -1,0 +1,21 @@
+{{$variant := .Variant}}
+{{if not $variant}}{{$variant = "primary"}}{{end}}
+{{$size := .Size}}
+{{if not $size}}{{$size = "md"}}{{end}}
+{{$type := .Type}}
+{{if not $type}}{{$type = "button"}}{{end}}
+{{$base := "inline-flex items-center justify-center gap-2 rounded-md font-medium no-underline transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60"}}
+{{$pad := "px-3 py-2 text-sm"}}
+{{if eq $size "sm"}}{{$pad = "px-2 py-1 text-xs"}}{{end}}
+{{$color := "bg-primary text-primary-fg hover:opacity-90"}}
+{{if eq $variant "secondary"}}{{$color = "border border-border bg-surface text-text hover:bg-surface-muted"}}{{end}}
+{{if eq $variant "danger"}}{{$color = "bg-danger text-danger-fg hover:opacity-90"}}{{end}}
+{{if eq $variant "ghost"}}{{$color = "bg-transparent text-text-secondary hover:bg-surface-muted hover:text-text"}}{{end}}
+{{if .Href}}
+<a href="{{.Href}}" class="{{$base}} {{$pad}} {{$color}} {{.Class}}" {{if .Disabled}}aria-disabled="true" tabindex="-1"{{end}}>{{.Label}}</a>
+{{else}}
+<button type="{{$type}}" class="{{$base}} {{$pad}} {{$color}} {{.Class}}" {{if .Disabled}}disabled{{end}} {{if .Loading}}aria-busy="true"{{end}}>
+  {{if .Loading}}<span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true"></span>{{end}}
+  {{.Label}}
+</button>
+{{end}}

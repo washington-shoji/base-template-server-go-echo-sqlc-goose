@@ -1,0 +1,15 @@
+{{if not .Reports}}
+  {{template "components/empty-state.html" (dict "Title" "No reports yet" "Message" "Start a todo-summary report to see async status updates.")}}
+{{else}}
+<ul class="divide-y divide-border rounded-lg border border-border bg-surface" role="list">
+  {{range .Reports}}
+  <li class="flex flex-col gap-1 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="min-w-0">
+      <a class="text-sm font-medium no-underline hover:underline" href="/app/reports/{{.ReportID}}">{{.Type}}</a>
+      <p class="text-xs text-text-secondary">{{formatTime .CreatedAt}}</p>
+    </div>
+    {{template "components/status-badge.html" .Status}}
+  </li>
+  {{end}}
+</ul>
+{{end}}

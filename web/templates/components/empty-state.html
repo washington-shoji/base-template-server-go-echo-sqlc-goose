@@ -1,0 +1,10 @@
+{{/* components/empty-state.html — dict: Title, Message, ActionLabel, ActionHref */}}
+<div class="rounded-lg border border-dashed border-border px-6 py-10 text-center">
+  <p class="text-base font-medium text-text">{{.Title}}</p>
+  {{if .Message}}<p class="mt-1 text-sm text-text-secondary">{{.Message}}</p>{{end}}
+  {{if and .ActionLabel .ActionHref}}
+  <div class="mt-4">
+    {{template "components/button.html" (dict "Label" .ActionLabel "Href" .ActionHref "Variant" "secondary")}}
+  </div>
+  {{end}}
+</div>
